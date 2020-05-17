@@ -99,7 +99,8 @@ RUN set -ex && apt-get update && apt-get install -y --no-install-recommends \
     nodejs \
     nodejs-npm \
     zlib1g \
-    libssl
+    libssl \
+    openjdk-11-jre
 
 # Add TypeScript support
 
