@@ -89,7 +89,7 @@ RUN curl -sSL https://github.com/grpc/grpc-web/releases/download/${grpc_web}/pro
     -o /tmp/grpc_web_plugin && \
     chmod +x /tmp/grpc_web_plugin
 
-FROM debian:$debian AS grpckit
+FROM debian:$debian-slim AS grpckit
 
 RUN set -ex && apt-get update && apt-get install -y --no-install-recommends \
     bash \
