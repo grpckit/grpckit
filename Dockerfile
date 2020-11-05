@@ -57,7 +57,7 @@ WORKDIR /tmp
 # Install Buf
 RUN BIN="/usr/local/bin" && \
     BINARY_NAME="buf" && \
-    curl -sSL \
+    curl -4 -fsSL --connect-timeout 5 --retry 5 --retry-delay 0 --retry-max-time 40 \
     "https://github.com/bufbuild/buf/releases/download/v"$buf_version"/${BINARY_NAME}-$(uname -s)-$(uname -m)" \
     -o "${BIN}/${BINARY_NAME}" && \
     chmod +x "${BIN}/${BINARY_NAME}"
@@ -80,7 +80,8 @@ RUN go get -u github.com/pseudomuto/protoc-gen-doc/cmd/protoc-gen-doc
 # RUN go get -u github.com/micro/protobuf/protoc-gen-go
 
 RUN go get -d github.com/envoyproxy/protoc-gen-validate
-RUN make -C /go/src/github.com/envoyproxy/protoc-gen-validate/ build
+# This started to fail and may not be needed anymore. See: https://github.com/envoyproxy/protoc-gen-validate/issues/391#issuecomment-709624215
+#RUN make -C /go/src/github.com/envoyproxy/protoc-gen-validate/ build
 
 # Omniproto
 RUN go get -u github.com/grpckit/omniproto
@@ -89,14 +90,13 @@ RUN go get -u github.com/grpckit/omniproto
 RUN go get -u github.com/coinbase/protoc-gen-rbi
 
 # Add scala support
-RUN curl -LO https://github.com/scalapb/ScalaPB/releases/download/v0.9.6/protoc-gen-scala-0.9.6-linux-x86_64.zip \
+RUN curl -4 -fLO --connect-timeout 5 --retry 5 --retry-delay 0 --retry-max-time 40 https://github.com/scalapb/ScalaPB/releases/download/v0.9.6/protoc-gen-scala-0.9.6-linux-x86_64.zip \
     && unzip protoc-gen-scala-0.9.6-linux-x86_64.zip \
     && chmod +x /tmp/protoc-gen-scala
 
 # Add grpc-web support
-RUN curl -sSL https://github.com/grpc/grpc-web/releases/download/${grpc_web}/protoc-gen-grpc-web-${grpc_web}-linux-x86_64 \
-    -o /tmp/grpc_web_plugin && \
-    chmod +x /tmp/grpc_web_plugin
+RUN curl -4 -fsSL -o /tmp/grpc_web_plugin --connect-timeout 5 --retry 5 --retry-delay 0 --retry-max-time 40 https://github.com/grpc/grpc-web/releases/download/${grpc_web}/protoc-gen-grpc-web-${grpc_web}-linux-x86_64 \
+    && chmod +x /tmp/grpc_web_plugin
 
 FROM debian:$debian-slim AS grpckit
 
