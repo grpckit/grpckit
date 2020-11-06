@@ -95,8 +95,8 @@ RUN curl -4 -fLO --connect-timeout 5 --retry 5 --retry-delay 0 --retry-max-time 
     && chmod +x /tmp/protoc-gen-scala
 
 # Add grpc-web support
-RUN curl -4 -fsSL -o /tmp/grpc_web_plugin --connect-timeout 5 --retry 5 --retry-delay 0 --retry-max-time 40 https://github.com/grpc/grpc-web/releases/download/${grpc_web}/protoc-gen-grpc-web-${grpc_web}-linux-x86_64 \
-    && chmod +x /tmp/grpc_web_plugin
+RUN curl -4 -fsSL -o /tmp/protoc-gen-grpc-web --connect-timeout 5 --retry 5 --retry-delay 0 --retry-max-time 40 https://github.com/grpc/grpc-web/releases/download/${grpc_web}/protoc-gen-grpc-web-${grpc_web}-linux-x86_64 \
+    && chmod +x /tmp/protoc-gen-grpc-web
 
 FROM debian:$debian-slim AS grpckit
 
@@ -122,7 +122,7 @@ COPY --from=build /opt/lib/ /usr/local/lib/
 COPY --from=build /opt/share/ /usr/local/share/
 COPY --from=build /tmp/grpc-java/compiler/build/exe/java_plugin/protoc-gen-grpc-java /usr/local/bin/
 COPY --from=build /go/bin/ /usr/local/bin/
-COPY --from=build /tmp/grpc_web_plugin /usr/local/bin/grpc_web_plugin
+COPY --from=build /tmp/protoc-gen-grpc-web /usr/local/bin/
 COPY --from=build /usr/local/bin/buf /usr/local/bin/buf
 COPY --from=build /tmp/protoc-gen-scala /usr/local/bin/
 
