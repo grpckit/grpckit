@@ -56,6 +56,14 @@ WORKDIR /tmp/grpc-java/compiler
 RUN CXXFLAGS="-I/opt/include" LDFLAGS="-L/opt/lib" ../gradlew -PskipAndroid=true java_pluginExecutable
 
 WORKDIR /tmp
+RUN git clone https://github.com/grpc/grpc-kotlin.git
+WORKDIR /tmp/grpc-kotlin/compiler
+RUN ../gradlew build
+# The generated artifact for grpc-kotlin is not executable, and for this reason bash execution is prepended. 
+# More information regarding the issue could be optained from: https://github.com/grpc/grpc-kotlin/issues/98
+RUN /bin/bash -c "cat <(echo '#!/usr/bin/java -jar') build/artifacts/protoc-gen-grpc-kotlin > build/artifacts/protoc-gen-grpc-kotlin.jar"
+RUN chmod +x build/artifacts/protoc-gen-grpc-kotlin.jar
+WORKDIR /tmp
 
 # Install Buf
 RUN BIN="/usr/local/bin" && \
@@ -125,6 +133,7 @@ COPY --from=build /opt/include/ /usr/local/include/
 COPY --from=build /opt/lib/ /usr/local/lib/
 COPY --from=build /opt/share/ /usr/local/share/
 COPY --from=build /tmp/grpc-java/compiler/build/exe/java_plugin/protoc-gen-grpc-java /usr/local/bin/
+COPY --from=build /tmp/grpc-kotlin/compiler/build/artifacts/protoc-gen-grpc-kotlin.jar /usr/local/bin/protoc-gen-grpc-kotlin
 COPY --from=build /go/bin/ /usr/local/bin/
 COPY --from=build /tmp/grpc_web_plugin /usr/local/bin/protoc-gen-grpc-web
 COPY --from=build /usr/local/bin/buf /usr/local/bin/buf
