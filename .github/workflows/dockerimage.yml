@@ -15,6 +15,8 @@ jobs:
         password: ${{ secrets.DOCKER_PASSWORD }}
     - name: Build images
       run: ./build.sh
+    - name: Test the image
+      run: ./test.sh
     - name: Push images
       run: ./push.sh
       if: github.ref == 'refs/heads/master'

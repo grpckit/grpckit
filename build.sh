@@ -10,7 +10,9 @@ for build in ${BUILDS[@]}; do
         --build-arg grpc_java=${GRPC_JAVA_VERSION} \
         --build-arg grpc_web=${GRPC_WEB_VERSION} \
         --build-arg buf_version=${BUF_VERSION} \
+        --build-arg grpc_gateway=${GRPC_GATEWAY_VERSION} \
         --target ${build} \
+        --progress=plain \
         .
 
     if [ "${LATEST}" = true ]; then

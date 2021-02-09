@@ -4,6 +4,7 @@ ARG grpc
 ARG grpc_java
 ARG buf_version
 ARG grpc_web
+ARG grpc_gateway
 
 FROM golang:$go-$debian AS build
 
@@ -11,6 +12,7 @@ FROM golang:$go-$debian AS build
 ARG grpc
 ARG grpc_java
 ARG grpc_web
+ARG grpc_gateway
 ARG buf_version
 
 RUN set -ex && apt-get update && apt-get install -y --no-install-recommends \
@@ -28,6 +30,7 @@ RUN set -ex && apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /tmp
 
+RUN echo $grpc 'x'
 RUN git clone -b v$grpc.x --recursive -j8 --depth 1 https://github.com/grpc/grpc
 RUN mkdir -p /tmp/grpc/cmake/build
 WORKDIR /tmp/grpc/cmake/build
@@ -47,13 +50,20 @@ ENV PATH "$PATH:/opt/bin"
 # Workaround for the transition to protoc-gen-go-grpc
 # https://grpc.io/docs/languages/go/quickstart/#regenerate-grpc-code
 WORKDIR /tmp
-RUN git clone -b v$grpc.x --recursive https://github.com/grpc/grpc-go.git
+RUN git clone -b "v${grpc}.x" --recursive https://github.com/grpc/grpc-go.git
 RUN ( cd ./grpc-go/cmd/protoc-gen-go-grpc && go install . )
 
 WORKDIR /tmp
-RUN git clone -b v$grpc_java.x --recursive https://github.com/grpc/grpc-java.git
+RUN git clone -b "v${grpc_java}.x" --recursive https://github.com/grpc/grpc-java.git
 WORKDIR /tmp/grpc-java/compiler
 RUN CXXFLAGS="-I/opt/include" LDFLAGS="-L/opt/lib" ../gradlew -PskipAndroid=true java_pluginExecutable
+
+# Add grpc-gateway & openapiv2 support (formerly known as protoc-gen-swagger)
+WORKDIR /tmp
+RUN git clone -b "v${grpc_gateway}" --recursive https://github.com/grpc-ecosystem/grpc-gateway.git
+WORKDIR /tmp/grpc-gateway
+RUN go install ./protoc-gen-grpc-gateway && go install ./protoc-gen-openapiv2
+
 
 WORKDIR /tmp
 
@@ -61,7 +71,7 @@ WORKDIR /tmp
 RUN BIN="/usr/local/bin" && \
     BINARY_NAME="buf" && \
     curl -sSL \
-    "https://github.com/bufbuild/buf/releases/download/v"$buf_version"/${BINARY_NAME}-$(uname -s)-$(uname -m)" \
+    "https://github.com/bufbuild/buf/releases/download/v${buf_version}/${BINARY_NAME}-$(uname -s)-$(uname -m)" \
     -o "${BIN}/${BINARY_NAME}" && \
     chmod +x "${BIN}/${BINARY_NAME}"
 
@@ -93,14 +103,15 @@ RUN go get -u github.com/grpckit/omniproto
 RUN go get -u github.com/coinbase/protoc-gen-rbi
 
 # Add scala support
-RUN curl -LO https://github.com/scalapb/ScalaPB/releases/download/v0.9.6/protoc-gen-scala-0.9.6-linux-x86_64.zip \
-    && unzip protoc-gen-scala-0.9.6-linux-x86_64.zip \
+ADD https://github.com/scalapb/ScalaPB/releases/download/v0.9.6/protoc-gen-scala-0.9.6-linux-x86_64.zip /tmp/protoc-gen-scala-0.9.6-linux-x86_64.zip
+RUN unzip protoc-gen-scala-0.9.6-linux-x86_64.zip \
     && chmod +x /tmp/protoc-gen-scala
 
 # Add grpc-web support
 RUN curl -sSL https://github.com/grpc/grpc-web/releases/download/${grpc_web}/protoc-gen-grpc-web-${grpc_web}-linux-x86_64 \
-    -o /tmp/grpc_web_plugin && \
-    chmod +x /tmp/grpc_web_plugin
+    -o /tmp/protoc-gen-grpc-web && \
+    chmod +x /tmp/protoc-gen-grpc-web
+
 
 FROM debian:$debian-slim AS grpckit
 
@@ -126,7 +137,10 @@ COPY --from=build /opt/lib/ /usr/local/lib/
 COPY --from=build /opt/share/ /usr/local/share/
 COPY --from=build /tmp/grpc-java/compiler/build/exe/java_plugin/protoc-gen-grpc-java /usr/local/bin/
 COPY --from=build /go/bin/ /usr/local/bin/
-COPY --from=build /tmp/grpc_web_plugin /usr/local/bin/protoc-gen-grpc-web
+COPY --from=build /tmp/protoc-gen-grpc-web /usr/local/bin/protoc-gen-grpc-web
+COPY --from=build /go/bin/protoc-gen-grpc-gateway /usr/local/bin/protoc-gen-grpc-gateway
+COPY --from=build /go/bin/protoc-gen-openapiv2 /usr/local/bin/protoc-gen-openapiv2
+COPY --from=build /tmp/protoc-gen-grpc-web /usr/local/bin/protoc-gen-grpc-web
 COPY --from=build /usr/local/bin/buf /usr/local/bin/buf
 COPY --from=build /tmp/protoc-gen-scala /usr/local/bin/
 

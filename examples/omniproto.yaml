@@ -1,0 +1,50 @@
+rootdir: protos  # protorepo is the default root dir
+output: gen  # gen is the default output directory (should be gitignored)
+sources:
+  - helloworld.proto
+
+
+plugins:
+  #
+  # Go generator examples
+  #
+  - name: go  # Generate the protobuf messages for go
+    args: paths=source_relative
+  - name: go-grpc # Generate the GRPC client & server code
+    args: paths=source_relative # TODO: Bump grpc version & add `,requireUnimplementedServers=false`
+  - name: validate  # Include the validators in the generated code
+    args: paths=source_relative,lang=go
+
+  # Build the openapi v2 json file for swagger integrations
+  # To migrate from swagger to openapiv2 follow the guide here:
+  # > https://grpc-ecosystem.github.io/grpc-gateway/docs/development/grpc-gateway_v2_migration_guide/
+  - name: openapiv2
+    args: logtostderr=true,json_names_for_fields=false
+
+  #
+  # GRPC Web + typescript example
+  #
+  - name: grpc-web  # Example of typescript clients
+    args: import_style=commonjs,mode=grpcwebtext
+
+  #
+  # Python generator for protobuf messages
+  #
+  - name: python  # Example of generating the python clients
+    output: gen
+
+
+descriptors:
+  # defaults to descriptors.pb in root output directory
+  output: gen/descriptors.pb
+  # defaults to true, descriptors are useful
+  enabled: true
+  # Enable the imports & source so we can use the descriptors file with grpc-transcoding / grpc-web
+  include_imports: true
+  include_source_info: true
+
+# debug will output command line information
+debug: true
+
+# if true, don't execute the protoc command. useful with debug.
+dry_run: false
