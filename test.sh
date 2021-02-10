@@ -1,4 +1,4 @@
-#!/bin/bash -e
+#!/bin/bash -ex
 source ./variables.sh
 
 cd ./examples
@@ -8,7 +8,7 @@ tag=${CONTAINER}/${build}:${GRPC_VERSION}_${BUILD_VERSION}
 
 rm -rf ./gen
 
-docker run --rm --user ${UID}:${GID} -v ${PWD}:/workspace ${tag}
+docker run --rm --user $(id -u):$(id -g) -v ${PWD}:/workspace ${tag}
 echo $?
 
 # Verify the expected files are generated
