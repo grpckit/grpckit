@@ -74,6 +74,9 @@ RUN go get -u google.golang.org/protobuf/cmd/protoc-gen-go
 RUN go get -u github.com/gogo/protobuf/protoc-gen-gogo
 RUN go get -u github.com/gogo/protobuf/protoc-gen-gogofast
 
+# gotemplate
+RUN go get -u moul.io/protoc-gen-gotemplate
+
 # Lint
 RUN go get -u github.com/ckaznocha/protoc-gen-lint
 
