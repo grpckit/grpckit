@@ -24,6 +24,46 @@ It is recommended to use `omniproto`:
 docker run -v $(pwd):/workspace --rm grpckit/omniproto
 ```
 
+## Omniproto configuration
+
+The `omniproto.yaml` config file controls the behavior of the generators.
+
+Each generator is configured in the plugins folder as shown below. 
+The arguments are specific to each generator, so you will need to read the instructions for each step:
+
+  ```yaml
+  # cd ./examples
+  rootdir: protos
+  output: gen
+  sources:
+    - helloworld.proto
+  plugins:
+    - name: go # Go, go-grpc, and validation generators
+      args: paths=source_relative
+    - name: go-grpc
+      args: paths=source_relative
+    - name: validate
+      args: paths=source_relative,lang=go
+  
+    - name: grpc-web  # Typescript & grpc-web generator
+      args: import_style=commonjs,mode=grpcwebtext
+  
+    - name: python  # Python generator
+      output: gen
+
+    - name: openapiv2  # Openapi generator
+      args: logtostderr=true,json_names_for_fields=false
+  
+  # Descriptors generator, this would be used with grpc-transcoding to convert JSON -> GRPC requests
+  descriptors:
+    output: gen/descriptors.pb
+    enabled: true
+    include_imports: true
+    include_source_info: true
+
+  debug: true
+  ```
+
 ## Supported plugins
 
 - Go's new protocolbuffer library, [google.golang.org/protobuf](https://google.golang.org/protobuf)
